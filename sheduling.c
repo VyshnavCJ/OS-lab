@@ -12,6 +12,7 @@ typedef struct process {
 }pro;
 
 pro p[10],temp;
+int temp1[10];
 
 void fcfs(void);
 void sjf(void);
@@ -32,7 +33,9 @@ void sort(int n){
 				p[j+1] = temp;
 			}
 		}
+		temp1[i] = p[i].bt;
 	}
+	temp1[n-1] = p[n-1].bt;
 
 }
 
@@ -49,7 +52,7 @@ void ct(int n){
 }
 
 
-void tat(int n){
+ void tat(int n){
 	int i;
 	for(i=0;i<n;i++){
         	p[i].tat = p[i].ct - p[i].at;
@@ -85,7 +88,7 @@ void displayPri(int n){
 	printf("process|Burst time|Arrival time|Priority|Waiting time|Turnaround time\n");
 	int i;
 	for(i=0;i<n;i++){
-		printf("%d | %d | %d | %d | %d | %d \n",p[i].no,p[i].bt,p[i].at,p[i].p,p[i].wt,p[i].tat);
+		printf("%d | %d | %d | %d | %d | %d \n",p[i].no,temp1[i],p[i].at,p[i].p,p[i].wt,p[i].tat);
 	}
 }
 
@@ -155,6 +158,7 @@ int initPri(){
                 printf("Enter the burst time, Priority of process and Arival time %d: ",i+1);
                 scanf("%d %d %d",&p[i].bt,&p[i].p,&p[i].at);
                 p[i].no = i + 1;
+		temp1[i] = p[i].bt;
         }
 	return n;
 }
@@ -178,86 +182,61 @@ int* initRR(){
 	return X;
 }
 
-void enqueue(int n){
-	if(rear >= 19)
-		printf("Overflow\n");
-	else
-		queue[++rear] = n;
-}
-
-int dequeue(){
-	int ret;
-	if(front>rear){
-		printf("Underflow\n");
-	}
-	else
-		ret = queue[front++];
-	return ret;
-}
 
 
 void rr(){
 	int *x = initRR();
 	int n = x[0];
 	int t = x[1];
-	int i,j,time=0,flag=1;
+	int y = n;
+	int i,j,sum=0,count=0;
 	sort(n);
-	for(i=0;i<n;i++){
-		p[i].rbt = p[i].bt;
-	}
-	if(p[0].rbt<=t){
-		p[0].ct = p[0].at + p[0].bt;
-		time+= p[0].ct;
-		p[0].rbt = 0;
-	}else{
-		p[0].rbt -= t;
-		time +=t + p[0].at;
-		enqueue(0);
-	}
-	for(i=1;i<n;){
-		if(p[i].rbt <= t && p[i].rbt > 0){
-			time+=p[i].rbt;
-			p[i].rbt = 0;
-			p[i].ct = time;
-
-			if(i==queue[front])
-				dequeue();
+	printf("\n Process No \t\tBurst Time \t\t TAT \t\t Waiting Time");
+	for(sum=0,i=0;y!=0;){
+		if(temp1[i]<=t && temp1[i]>0){
+			sum+=temp1[i];
+			temp1[i]=0;
+			count = 1;
+		}else if(temp1[i]>0){
+			temp1[i]-=t;
+			sum+=t;
 		}
-		else if(p[i].rbt > t){
-			p[i].rbt -=t;		
-			time += t;
-			for(j=flag+1;j<n;j++){
-				if(p[j].at <= time){
-					flag = j;
-					enqueue(j);
-				}
-			}
-			enqueue(i);
+		if(temp1[i]==0 && count==1){
+			y--;
+			printf("\nProcess No[%d] \t\t %d\t\t\t %d\t\t\t %d",p[i].no,p[i].bt,sum-p[i].at,sum-p[i].at-p[i].bt);
+			count=0;
 		}
-		if(front <= rear)
-			i = dequeue();
-		else
-			i++;		
+		if(i==n-1){
+			i=0;
+		}else if(p[i+1].at<=sum){
+			i++;
+		}else{
+			i=0;
+		}
 	}
-	tat(n);
-	wt(n);
-	display(n);
 }
 
 void pri(){
 	int n = initPri();
-	int i ,j;
-	for(i=0;i<n-1;i++){
-		for(j=0;j<n-i-1;j++){
-			if(p[j].p>p[j+1].p){
-				temp = p[j];
-				p[j] = p[j+1];
-				p[j+1] = temp;
-			}
+	sort(n);
+	int i ,j,smallest,count=0,time=0,end=0;
+	p[9].p=1000;
+	for(time=0;count!=n;time++){
+		smallest=9;
+		for(i=0;i<n;i++){
+			if(p[i].at<=time && p[i].p<p[smallest].p && p[i].bt>0){
+				smallest=i;
+			}	
+		}
+		p[smallest].bt--;
+		if(p[smallest].bt==0){
+			count++;
+			end=time+1;
+			p[smallest].ct=end;
+			p[smallest].wt=end-p[smallest].at-temp1[smallest];
+			p[smallest].tat=end-p[smallest].at;
 		}
 	}
-	tatPri(n);
-	wt(n);
 	displayPri(n);	
 
 }
